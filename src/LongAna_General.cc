@@ -353,38 +353,128 @@ int main(int argc,  char** argv){
   }
   
   TProfile* pro_x[15];
-  double par0[15];
-  double par1[15];
+  TProfile* pro_y[15];
+  double par0_x[15];
+  double par1_x[15];
+  double mean_x[15];
+  double par0_y[15];
+  double par1_y[15];
+  double mean_y[15];
   for(int j = 0; j < 15; j++){
     pro_x[j] = h_tof_2d[j]->ProfileX("_pfx", 1, -1, "o");
-    TFitResultPtr r = pro_x[j]->Fit("pol1", "S", "", 
-				    pro_x[j]->GetMean(1)-1.9*pro_x[j]->GetRMS(1),
-				    pro_x[j]->GetMean(1)+1.9*pro_x[j]->GetRMS(1));
+    pro_y[j] = h_tof_2d[j]->ProfileY("_pfy", 1, -1, "o");
+    TFitResultPtr rx = pro_x[j]->Fit("pol1", "S", "", 
+				     pro_x[j]->GetMean(1)-2.0*pro_x[j]->GetRMS(1),
+				     pro_x[j]->GetMean(1)+2.0*pro_x[j]->GetRMS(1));
     pro_x[j]->SetAxisRange(pro_x[j]->GetMean(2)-2.0*pro_x[j]->GetRMS(2),
 			   pro_x[j]->GetMean(2)+2.0*pro_x[j]->GetRMS(2),"Y");
-    par0[j]   = r->Parameter(0); // retrieve the value for the parameter 0
-    par1[j]   = r->Parameter(1);
     
+    TFitResultPtr ry = pro_y[j]->Fit("pol1", "S", "", 
+				     pro_y[j]->GetMean(1)-2.0*pro_y[j]->GetRMS(1),
+				     pro_y[j]->GetMean(1)+2.0*pro_y[j]->GetRMS(1));
+    pro_y[j]->SetAxisRange(pro_y[j]->GetMean(2)-2.0*pro_y[j]->GetRMS(2),
+			   pro_y[j]->GetMean(2)+2.0*pro_y[j]->GetRMS(2),"Y");
+    mean_x[j] = pro_x[j]->GetMean(1);
+    par0_x[j] = rx->Parameter(0);//retrieve the value for the parameter 0
+    par1_x[j] = rx->Parameter(1);
+    mean_y[j] = pro_y[j]->GetMean(1);
+    par0_y[j] = ry->Parameter(0);//retrieve the value for the parameter 0
+    par1_y[j] = ry->Parameter(1);
   }
   
-  TH1F* h_tof0_corr = new TH1F("h0_corr", "h0_corr", n_bins[1], b_low[1], b_high[1]);
-   for(int i = 0; i < nentries; i++){
+  TH1F* h_tof_c[30];
+  for(int j = 0; j < 30; j++){
+    TString sn(Form("tof_%d_c_v%d",j%6,j/6));
+    h_tof_c[j] = new TH1F(sn, sn, n_bins[j%6], b_low[j%6], b_high[j%6]);
+  }
+  for(int i = 0; i < nentries; i++){
     tree->GetEntry(i);
     float tof0 = t1-t2;
     float tof1 = t1-t3;
-    if(bit1==0 && bit2==0 && bit3==0)h_tof0_corr->Fill(tof1-(tof0+0.5511)*par1[0]);
-   }
+    float tof2 = t1-t4;
+    float tof3 = t2-t3;
+    float tof4 = t2-t4;
+    float tof5 = t3-t4;
+    if(bit1==0 && bit2==0 && bit3==0){
+      h_tof_c[0]->Fill(tof0-(tof1-mean_y[0])*par1_y[0]);
+      h_tof_c[1]->Fill(tof1-(tof0-mean_x[0])*par1_x[0]);
+      
+      h_tof_c[3]->Fill(tof3-(tof0-mean_x[2])*par1_x[2]);
+      h_tof_c[12]->Fill(tof0-(tof3-mean_y[2])*par1_x[2]);
+      
+      h_tof_c[13]->Fill(tof1-(tof3-mean_y[6])*par1_y[6]);
+      h_tof_c[9]->Fill(tof3-(tof1-mean_x[6])*par1_x[6]);
+     
+    }
+    if(bit1==0 && bit2==0 && bit4==0){
+      h_tof_c[6]->Fill(tof0-(tof2-mean_y[1])*par1_y[1]);
+      h_tof_c[2]->Fill(tof2-(tof0-mean_x[1])*par1_x[1]);
+      
+      h_tof_c[18]->Fill(tof0-(tof4-mean_y[3])*par1_y[3]);
+      h_tof_c[4]->Fill(tof4-(tof0-mean_x[3])*par1_x[3]);
+
+      h_tof_c[20]->Fill(tof2-(tof4-mean_y[10])*par1_y[10]);
+      h_tof_c[16]->Fill(tof4-(tof2-mean_x[10])*par1_x[10]);
+    }
+    
+    if(bit1==0 && bit2==0 && bit4==0){
+      h_tof_c[24]->Fill(tof0-(tof5-mean_y[4])*par1_y[4]);
+      h_tof_c[5]->Fill(tof5-(tof0-mean_x[4])*par1_x[4]);
+      
+      h_tof_c[19]->Fill(tof1-(tof4-mean_y[7])*par1_y[7]);
+      h_tof_c[10]->Fill(tof4-(tof1-mean_x[7])*par1_x[7]);
+      
+      h_tof_c[14]->Fill(tof2-(tof3-mean_y[9])*par1_y[9]);
+      h_tof_c[15]->Fill(tof3-(tof2-mean_x[9])*par1_x[9]);
+    }
+    if(bit1==0 && bit3==0 && bit4==0){
+      h_tof_c[7]->Fill(tof1-(tof2-mean_y[5])*par1_y[5]);
+      h_tof_c[8]->Fill(tof2-(tof1-mean_x[5])*par1_x[5]);
+      
+      h_tof_c[25]->Fill(tof1-(tof5-mean_y[8])*par1_y[8]);
+      h_tof_c[11]->Fill(tof5-(tof1-mean_x[8])*par1_x[8]);
+      
+      h_tof_c[26]->Fill(tof2-(tof5-mean_y[11])*par1_y[11]);
+      h_tof_c[17]->Fill(tof5-(tof2-mean_x[11])*par1_x[11]);
+    }
+    if(bit1==0 && bit3==0 && bit4==0){
+      h_tof_c[21]->Fill(tof3-(tof4-mean_y[12])*par1_y[12]);
+      h_tof_c[22]->Fill(tof4-(tof3-mean_x[12])*par1_x[12]);
+      
+      h_tof_c[27]->Fill(tof3-(tof5-mean_y[13])*par1_y[13]);
+      h_tof_c[23]->Fill(tof5-(tof3-mean_x[13])*par1_x[13]);
+
+      h_tof_c[28]->Fill(tof4-(tof5-mean_y[14])*par1_y[14]);
+      h_tof_c[29]->Fill(tof5-(tof4-mean_x[14])*par1_x[14]);
+    }
+  }
+  //Save figures for corrected TOF
+  for(int i = 0; i < 30; i++){
+    float nsigma = 2.0;
+    float t_low = h_tof_c[i]->GetMean() - nsigma*h_tof_c[i]->GetRMS();
+    float t_high = h_tof_c[i]->GetMean() + nsigma*h_tof_c[i]->GetRMS();
+    gf = new TF1("gf","gaus(0)",t_low, t_high);
+    gf->SetParNames("Norm_{fit}","#mu_{fit}", "#sigma_{fit}");
+    gf->SetParameter(0,h_tof_c[i]->GetMaximum());
+    gf->SetParameter(1,h_tof_c[i]->GetMean());
+    gf->SetParameter(2,h_tof_c[i]->GetRMS());
+    h_tof_c[i]->Fit(gf,"MWLR");
+    TString s(Form("/tof_%d_c_v%d",i%6,i/6));
+    Makeup(h_tof_c[i], sn+s, xtit[i%6], "Events/10ps");
+  }
   
-  
-  
-  TFile* tmp = new TFile("tmp.root", "RECREATE");
-  h_tof0_corr->Write();
+  TFile* tmp = new TFile(sn+"/tmp.root", "RECREATE");
+ 
   for(int j = 0; j < 6; j++){
     h_tof[j]->Write();
   }
   for(int j = 0; j < 15; j++){
     h_tof_2d[j]->Write();
     pro_x[j]->Write();
+    pro_y[j]->Write();
+  }
+  for(int j = 0; j < 30; j++){
+    h_tof_c[j]->Write();
   }
   return 0;
   
