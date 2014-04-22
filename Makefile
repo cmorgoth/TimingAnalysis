@@ -8,17 +8,43 @@ LDFLAGS := $(shell root-config --glibs) $(STDLIBDIR)
 
 CPPFLAGS += -g
 
-TARGET = analyze_RisingEdge
+TARGET1 = analyze_RisingEdge
+TARGET2 = PerpAna
+TARGET3 = LongAna
+TARGET4 = GenAna
 
-SRC = analyze_RisingEdge.cc
+SRC1 = analyze_RisingEdge.cc
+SRC2 = PerpAnalysis.cc src/Cosmetics1D.cc
+SRC3 = LongitudinalAnalysis.cc src/Cosmetics1D.cc
+SRC4 = src/LongAna_General.cc src/Cosmetics1D.cc
 
+OBJ1 = $(SRC1:.cc=.o)
+OBJ2 = $(SRC2:.cc=.o)
+OBJ3 = $(SRC3:.cc=.o)
+OBJ4 = $(SRC4:.cc=.o)
 
-OBJ = $(SRC:.cc=.o)
+all : $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4)
 
-all : $(TARGET)
+$(TARGET1) : $(OBJ1)
+	$(LD) $(CPPFLAGS) -o $(TARGET1) $(OBJ1) $(LDFLAGS)
+	@echo $@
+	@echo $<
+	@echo $^
 
-$(TARGET) : $(OBJ)
-	$(LD) $(CPPFLAGS) -o $(TARGET) $(OBJ) $(LDFLAGS)
+$(TARGET2) : $(OBJ2)
+	$(LD) $(CPPFLAGS) -o $(TARGET2) $(OBJ2) $(LDFLAGS)
+	@echo $@
+	@echo $<
+	@echo $^
+
+$(TARGET3) : $(OBJ3)
+	$(LD) $(CPPFLAGS) -o $(TARGET3) $(OBJ3) $(LDFLAGS)
+	@echo $@
+	@echo $<
+	@echo $^
+
+$(TARGET4) : $(OBJ4)
+	$(LD) $(CPPFLAGS) -o $(TARGET4) $(OBJ4) $(LDFLAGS)
 	@echo $@
 	@echo $<
 	@echo $^
@@ -28,5 +54,5 @@ $(TARGET) : $(OBJ)
 	@echo $@	
 	@echo $<
 clean :
-	rm -f *.o src/*.o $(TARGET) *~
+	rm -f *.o src/*.o $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) *~
 

@@ -107,7 +107,18 @@ int main (int argc, char **argv)
   TH1F *GausPeak_TOF_CH14   = new TH1F("GausPeak_TOF_CH14","GausPeak_TOF_CH14; t1-t4 [ns]; Events",4000,-40,4);
 
   // Create the output file with a TTree
-  TFile fout(argv[2],"recreate");
+  TFile* fout;
+  if(strncmp(argv[2], "same", 100) == 0){
+    std::string fn(argv[1]);
+    int pf = fn.find(".root");
+    int pi = fn.rfind("/")+1;
+    fn = "AnaFiles/" + fn.substr(pi, pf-pi) + "_ana.root";
+    std::cout << "fname: " << fn << std::endl;
+    //return 0;
+    fout = new TFile(fn.c_str(),"recreate");
+  }else{
+    fout = new TFile(argv[2],"recreate");
+  }
   TTree* treeOut = new TTree("tree","tree");
   
   unsigned int eventNumber = 0;
@@ -175,6 +186,7 @@ int main (int argc, char **argv)
 
   //read all entries and fill the histograms
   Long64_t nentries = t1->GetEntries();
+  //Long64_t nentries = 5;
 
   for (Long64_t iEntry=0;iEntry<nentries;iEntry++) 
     {
@@ -287,10 +299,10 @@ int main (int argc, char **argv)
       ch4Int = -1 * ChannelIntegral(Channel4Voltages_, index_min4) - 7 * base4;
 
       //Fit Rising Edge
-      ch1THM = FitRisingEdge(CH1pulse, 25, 8);
-      ch2THM = FitRisingEdge(CH2pulse, 15, 5);
-      ch3THM = FitRisingEdge(CH3pulse, 3, 1);
-      ch4THM = FitRisingEdge(CH4pulse, 3, 1);
+      ch1THM = FitRisingEdge(CH1pulse, 3, 0);
+      ch2THM = FitRisingEdge(CH2pulse, 3, 0);
+      ch3THM = FitRisingEdge(CH3pulse, 3, 0);
+      ch4THM = FitRisingEdge(CH4pulse, 3, 0);
             
       //Fill the tree
       treeOut->Fill();
@@ -311,7 +323,7 @@ int main (int argc, char **argv)
   
   treeOut->Write();
 
-  fout.Close();
+  fout->Close();
 }
 
 ////////////////////////////////////////////
@@ -564,6 +576,7 @@ float FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH){
   float m = f->GetParameter(1);
   float b = f->GetParameter(0);
   delete f;
-  return  (0.5*pulse->GetMaximum()-b)/m;
+  std::cout << "HTM: " << 0.2*(0.5*pulse->GetMaximum()-b)/m << std::endl;
+  return  0.2*(0.5*pulse->GetMaximum()-b)/m;//converted to picoseconds
   
 }
