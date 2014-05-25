@@ -186,7 +186,7 @@ int main (int argc, char **argv)
 
   //read all entries and fill the histograms
   Long64_t nentries = t1->GetEntries();
-  //Long64_t nentries = 5;
+  //Long64_t nentries = 100;
 
   for (Long64_t iEntry=0;iEntry<nentries;iEntry++) 
     {
@@ -280,6 +280,7 @@ int main (int argc, char **argv)
       float timepeak3 =  GausFit_MeanTime(CH3pulse, index_min3 - 3, index_min3+4);
       float timepeak4 =  GausFit_MeanTime(CH4pulse, index_min4 - 3, index_min4+4);
       
+      
       ch1Time_gausfitroot = timepeak1*0.2;
       ch2Time_gausfitroot = timepeak2*0.2;
       ch3Time_gausfitroot = timepeak3*0.2;
@@ -299,11 +300,15 @@ int main (int argc, char **argv)
       ch4Int = -1 * ChannelIntegral(Channel4Voltages_, index_min4) - 7 * base4;
 
       //Fit Rising Edge
-      ch1THM = FitRisingEdge(CH1pulse, 3, 0);
-      ch2THM = FitRisingEdge(CH2pulse, 3, 0);
-      ch3THM = FitRisingEdge(CH3pulse, 3, 0);
-      ch4THM = FitRisingEdge(CH4pulse, 3, 0);
-            
+      ch1THM = FitRisingEdge(CH1pulse, 0, 0);
+      ch2THM = FitRisingEdge(CH2pulse, 0, 0);
+      ch3THM = FitRisingEdge(CH3pulse, 0, 0);
+      ch4THM = FitRisingEdge(CH4pulse, 0, 0);
+      
+      if(ch1Amp < 0.05 || ch2Amp < 0.05){
+        //continue;
+      }
+      
       //Fill the tree
       treeOut->Fill();
     }
@@ -570,13 +575,16 @@ float ChannelIntegral(float *a, int peak)
 }
 
 float FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH){
-  int bM = pulse->GetMaximumBin();
-  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bM-nbinsL), pulse->GetBinCenter(bM-nbinsH));
+  //int bM = pulse->GetMaximumBin();
+  std::cout << "bin: " <<pulse->FindFirstBinAbove(0.7*pulse->GetMaximum()) << std::endl;
+  int bM = pulse->FindFirstBinAbove(0.7*pulse->GetMaximum());
+  int bL = pulse->FindFirstBinAbove(0.2*pulse->GetMaximum());
+  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bM-nbinsL), pulse->GetBinCenter(bL+nbinsH));
   pulse->Fit(f,"MWLR");
   float m = f->GetParameter(1);
   float b = f->GetParameter(0);
   delete f;
-  std::cout << "HTM: " << 0.2*(0.5*pulse->GetMaximum()-b)/m << std::endl;
-  return  0.2*(0.5*pulse->GetMaximum()-b)/m;//converted to picoseconds
+  std::cout << "HTM: " << 0.2*(0.3*pulse->GetMaximum()-b)/m << std::endl;
+  return  0.2*(0.3*pulse->GetMaximum()-b)/m;//converted to picoseconds
   
 }
