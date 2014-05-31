@@ -333,7 +333,7 @@ int main (int argc, char **argv)
       /////////////////////////
       // Find the amplitudes
       /////////////////////////
-      ch1Amp = -1 * Channel1Voltages_[index_min1] - base1;
+      /*ch1Amp = -1 * Channel1Voltages_[index_min1] - base1;
       ch2Amp = -1 * Channel2Voltages_[index_min2] - base2;
       ch3Amp = -1 * Channel3Voltages_[index_min3] - base3;
       ch4Amp = -1 * Channel4Voltages_[index_min4] - base4;
@@ -342,8 +342,19 @@ int main (int argc, char **argv)
       ch2Int = -1 * ChannelIntegral(Channel2Voltages_, index_min2) - 7 * base2;
       ch3Int = -1 * ChannelIntegral(Channel3Voltages_, index_min3) - 7 * base3;
       ch4Int = -1 * ChannelIntegral(Channel4Voltages_, index_min4) - 7 * base4;
+      */
+      ch1Amp = -1 * Channel1Voltages_[index_min1];
+      ch2Amp = -1 * Channel2Voltages_[index_min2];
+      ch3Amp = -1 * Channel3Voltages_[index_min3];
+      ch4Amp = -1 * Channel4Voltages_[index_min4];
+      
+      ch1Int = -1 * ChannelIntegral(Channel1Voltages_, index_min1);
+      ch2Int = -1 * ChannelIntegral(Channel2Voltages_, index_min2);
+      ch3Int = -1 * ChannelIntegral(Channel3Voltages_, index_min3);
+      ch4Int = -1 * ChannelIntegral(Channel4Voltages_, index_min4);
 
-      //FitFullPulse(CH2pulse, ch1_TFF, ch1_AFF);//ch1 Time Full Fit
+      float shift;
+      //FitFullPulse(CH2pulse, shift, ch2_AFF, ch2_TFF);//ch1 Time Full Fit
       //FitFullPulse(CH3pulse, ch2_TFF, ch2_AFF);//ch2 Time Full Fit
       //FitFullPulse(CH4pulse, ch4_TFF, ch4_AFF, ch4_TFF_v2);//ch4 Time Full Fit
       
@@ -354,7 +365,7 @@ int main (int argc, char **argv)
       ch1THM = FitRisingEdge(CH1pulse, -1, 0);
       ch2THM = FitRisingEdge(CH2pulse, 0, 0);
       //FitRisingEdge(CH1pulse, ch1_AFF, ch1THM, ch1BL, base1);
-      //FitRisingEdge(CH2pulse, ch1_AFF, ch1THM, ch2BL, base2);
+      //FitRisingEdge(CH2pulse, ch2_AFF, ch2THM, ch2BL, base2);
       //FitRisingEdge(CH3pulse, ch2_AFF, ch2THM, ch2BL, base2);
       ch3THM = FitRisingEdge(CH3pulse, 0, 0);
       ch4THM = FitRisingEdge(CH4pulse, 0, 0);
@@ -631,17 +642,16 @@ float ChannelIntegral(float *a, int peak)
 }
 
 float FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH){
-  int bM = pulse->FindFirstBinAbove(0.9*pulse->GetMaximum());
-  int bL = pulse->FindFirstBinAbove(0.125*pulse->GetMaximum());
-  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bL+nbinsL), pulse->GetBinCenter(bM+nbinsH));
+  int bM = pulse->FindFirstBinAbove(0.7*pulse->GetMaximum());
+  int bL = pulse->FindFirstBinAbove(0.2*pulse->GetMaximum());
+  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bL-nbinsL), pulse->GetBinCenter(bM+nbinsH));
   //pulse->Fit(f,"MWLR");
   pulse->Fit(f,"RQ");
   float m = f->GetParameter(1);
   float b = f->GetParameter(0);
   delete f;
-  //std::cout << "HTM: " << 0.2*(0.2*pulse->GetMaximum()-b)/m << std::endl;
-  return  0.2*(0.3*pulse->GetMaximum()-b)/m;//converted to picoseconds
-  
+  //std::cout << "HTM: " << 0.2*(0.5*pulse->GetMaximum()-b)/m << std::endl;
+  return  0.2*(0.5*pulse->GetMaximum()-b)/m;//converted to picoseconds
 }
 
 float FitRisingEdge(TH1F* pulse, float Max){
@@ -665,7 +675,7 @@ void FitRisingEdge(TH1F* pulse, float Max, float &THM, float &t0, float baseline
   pulse->Fit(f,"RQ");
   float m = f->GetParameter(1);
   float b = f->GetParameter(0);
-  THM = 0.20*(0.15*pulse->GetMaximum()-b)/m;//converted to picoseconds
+  THM = 0.20*(0.4*pulse->GetMaximum()-b)/m;//converted to picoseconds
   t0 = 0.20*(baseline-b)/m;//converted to picoseconds
   delete f;
 }
@@ -679,5 +689,5 @@ void FitFullPulse(TH1F* pulse, float &par0, float &par1, float &par2){
   pulse->Fit(f,"RQ");
   par0 = f->GetParameter(0);
   par1 = f->GetMaximum(10,1000);
-  par2 = f->GetX(10,0.3*par1);
+  par2 = 0.20*(f->GetX(10,0.8*par1));
 }
