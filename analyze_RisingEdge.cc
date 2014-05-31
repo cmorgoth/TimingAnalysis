@@ -33,6 +33,9 @@ float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range);
 float LinearFit_Intercept(TH1F * pulse, const float base, const int index_first, const int index_last);
 float GausFit_MeanTime(TH1F * pulse, const int index_first, const int index_last);
 float FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH);
+float FitRisingEdge(TH1F* pulse, float Max);
+void FitRisingEdge(TH1F* pulse, float Max, float &THM, float &t0, float baseline);
+void FitFullPulse(TH1F* pulse, float &par0, float &par1, float &par2);
 
 const int Nsamples = 1024;
 
@@ -136,7 +139,27 @@ int main (int argc, char **argv)
   float ch2THM = 0;//Time at half the Maximum
   float ch3THM = 0;//Time at half the Maximum
   float ch4THM = 0;//Time at half the Maximum
+
+  float ch1_TFF = 0.0;
+  float ch2_TFF = 0.0;
+  float ch3_TFF = 0.0;
+  float ch4_TFF = 0.0;
+
+  float ch1_TFF_v2 = 0.0;
+  float ch2_TFF_v2 = 0.0;
+  float ch3_TFF_v2 = 0.0;
+  float ch4_TFF_v2 = 0.0;
   
+  float ch1BL = 0.0;
+  float ch2BL = 0.0;
+  float ch3BL = 0.0;
+  float ch4BL = 0.0;
+
+  float ch1_AFF = 0.0;
+  float ch2_AFF = 0.0;
+  float ch3_AFF = 0.0;
+  float ch4_AFF = 0.0;
+
   float ch1Int = 0;
   float ch2Int = 0;
   float ch3Int = 0;
@@ -167,6 +190,27 @@ int main (int argc, char **argv)
   treeOut->Branch("ch2THM",&ch2THM,"ch2THM/F");
   treeOut->Branch("ch3THM",&ch3THM,"ch3THM/F");
   treeOut->Branch("ch4THM",&ch4THM,"ch4THM/F");
+
+  treeOut->Branch("ch1BL",&ch1BL,"ch1BL/F");
+  treeOut->Branch("ch2BL",&ch2BL,"ch2BL/F");
+  treeOut->Branch("ch3BL",&ch3BL,"ch3BL/F");
+  treeOut->Branch("ch4BL",&ch4BL,"ch4BL/F");
+  
+  treeOut->Branch("ch1_TFF", &ch1_TFF, "ch1_TFF/F");
+  treeOut->Branch("ch2_TFF", &ch2_TFF, "ch2_TFF/F");
+  treeOut->Branch("ch3_TFF", &ch3_TFF, "ch3_TFF/F");
+  treeOut->Branch("ch4_TFF", &ch4_TFF, "ch4_TFF/F");
+  
+  treeOut->Branch("ch1_TFF_v2", &ch1_TFF_v2, "ch1_TFF_v2/F");
+  treeOut->Branch("ch2_TFF_v2", &ch2_TFF_v2, "ch2_TFF_v2/F");
+  treeOut->Branch("ch3_TFF_v2", &ch3_TFF_v2, "ch3_TFF_v2/F");
+  treeOut->Branch("ch4_TFF_v2", &ch4_TFF_v2, "ch4_TFF_v2/F");
+
+  
+  treeOut->Branch("ch1_AFF", &ch1_AFF, "ch1_AFF/F");
+  treeOut->Branch("ch2_AFF", &ch2_AFF, "ch2_AFF/F");
+  treeOut->Branch("ch3_AFF", &ch3_AFF, "ch3_AFF/F");
+  treeOut->Branch("ch4_AFF", &ch4_AFF, "ch4_AFF/F");
   
   treeOut->Branch("ch1QualityBit",&ch1QualityBit,"ch1QualityBit/i");
   treeOut->Branch("ch2QualityBit",&ch2QualityBit,"ch2QualityBit/i");
@@ -186,14 +230,14 @@ int main (int argc, char **argv)
 
   //read all entries and fill the histograms
   Long64_t nentries = t1->GetEntries();
-  //Long64_t nentries = 100;
+  //Long64_t nentries = 10;
 
   for (Long64_t iEntry=0;iEntry<nentries;iEntry++) 
     {
       if(iEntry%100==0) std::cout<<"Processing Event: "<<iEntry<<" out of: "<<nentries<<std::endl;
       
       t1->GetEntry(iEntry);
-      eventNumber = iEntry;
+      eventNumber = iEntry+1;
 
       //////////////////////
       // convert to Volts
@@ -299,11 +343,23 @@ int main (int argc, char **argv)
       ch3Int = -1 * ChannelIntegral(Channel3Voltages_, index_min3) - 7 * base3;
       ch4Int = -1 * ChannelIntegral(Channel4Voltages_, index_min4) - 7 * base4;
 
+      //FitFullPulse(CH2pulse, ch1_TFF, ch1_AFF);//ch1 Time Full Fit
+      //FitFullPulse(CH3pulse, ch2_TFF, ch2_AFF);//ch2 Time Full Fit
+      //FitFullPulse(CH4pulse, ch4_TFF, ch4_AFF, ch4_TFF_v2);//ch4 Time Full Fit
+      
+      //std::cout << "ch4_AFF_v2: " << ch4_TFF_v2 << std::endl;
+      //std::cout << "ch2_AFF: " << ch2_AFF << std::endl;
+      
       //Fit Rising Edge
-      ch1THM = FitRisingEdge(CH1pulse, 0, 0);
+      ch1THM = FitRisingEdge(CH1pulse, -1, 0);
       ch2THM = FitRisingEdge(CH2pulse, 0, 0);
+      //FitRisingEdge(CH1pulse, ch1_AFF, ch1THM, ch1BL, base1);
+      //FitRisingEdge(CH2pulse, ch1_AFF, ch1THM, ch2BL, base2);
+      //FitRisingEdge(CH3pulse, ch2_AFF, ch2THM, ch2BL, base2);
       ch3THM = FitRisingEdge(CH3pulse, 0, 0);
       ch4THM = FitRisingEdge(CH4pulse, 0, 0);
+      //FitRisingEdge(CH4pulse, ch4_AFF, ch4THM, ch4BL, base4);
+      //std::cout << "ch4THM: " << ch4THM << "  ch4BL: " << ch4BL << std::endl;
       
       if(ch1Amp < 0.05 || ch2Amp < 0.05){
         //continue;
@@ -575,16 +631,53 @@ float ChannelIntegral(float *a, int peak)
 }
 
 float FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH){
-  //int bM = pulse->GetMaximumBin();
-  std::cout << "bin: " <<pulse->FindFirstBinAbove(0.7*pulse->GetMaximum()) << std::endl;
-  int bM = pulse->FindFirstBinAbove(0.7*pulse->GetMaximum());
-  int bL = pulse->FindFirstBinAbove(0.2*pulse->GetMaximum());
-  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bM-nbinsL), pulse->GetBinCenter(bL+nbinsH));
-  pulse->Fit(f,"MWLR");
+  int bM = pulse->FindFirstBinAbove(0.9*pulse->GetMaximum());
+  int bL = pulse->FindFirstBinAbove(0.125*pulse->GetMaximum());
+  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bL+nbinsL), pulse->GetBinCenter(bM+nbinsH));
+  //pulse->Fit(f,"MWLR");
+  pulse->Fit(f,"RQ");
   float m = f->GetParameter(1);
   float b = f->GetParameter(0);
   delete f;
-  std::cout << "HTM: " << 0.2*(0.3*pulse->GetMaximum()-b)/m << std::endl;
+  //std::cout << "HTM: " << 0.2*(0.2*pulse->GetMaximum()-b)/m << std::endl;
   return  0.2*(0.3*pulse->GetMaximum()-b)/m;//converted to picoseconds
   
+}
+
+float FitRisingEdge(TH1F* pulse, float Max){
+  int bM = pulse->FindFirstBinAbove(0.8*Max);
+  int bL = pulse->FindFirstBinAbove(0.125*Max);
+  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bL), pulse->GetBinCenter(bM));
+  //pulse->Fit(f,"MWLR");
+  pulse->Fit(f,"RQ");
+  float m = f->GetParameter(1);
+  float b = f->GetParameter(0);
+  delete f;
+  //std::cout << "HTM: " << 0.2*(0.3*pulse->GetMaximum()-b)/m << std::endl;
+  return  0.2*(0.5*pulse->GetMaximum()-b)/m;//converted to picoseconds
+}
+
+void FitRisingEdge(TH1F* pulse, float Max, float &THM, float &t0, float baseline){
+  int bM = pulse->FindFirstBinAbove(0.8*Max);
+  int bL = pulse->FindFirstBinAbove(0.125*Max);
+  TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bL), pulse->GetBinCenter(bM));
+  //pulse->Fit(f,"MWLR");
+  pulse->Fit(f,"RQ");
+  float m = f->GetParameter(1);
+  float b = f->GetParameter(0);
+  THM = 0.20*(0.15*pulse->GetMaximum()-b)/m;//converted to picoseconds
+  t0 = 0.20*(baseline-b)/m;//converted to picoseconds
+  delete f;
+}
+
+void FitFullPulse(TH1F* pulse, float &par0, float &par1, float &par2){
+  TF1* f = new TF1("f","[2]+[1]*0.004217/2*exp(0.004217/2*(2.0*357.0+1.0*2.06**2.0-2.0*(x-[0])))*ROOT::Math::erfc((357.0+0.004217*2.06**2.0-(x-[0]))/(1.41*2.06))",10,1000);
+  f->SetParameter(0, 40.0);
+  f->SetParameter(1, 60.0);
+  f->SetParameter(0, 0.0);
+  //pulse->Fit(f,"MWLR");
+  pulse->Fit(f,"RQ");
+  par0 = f->GetParameter(0);
+  par1 = f->GetMaximum(10,1000);
+  par2 = f->GetX(10,0.3*par1);
 }
