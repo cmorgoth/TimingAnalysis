@@ -625,7 +625,12 @@ float GausFit_MeanTime(TH1F* pulse, const int index_first, const int index_last)
 float ChannelIntegral(float *a, int peak) 
 {
   float integral = 0.;
-  integral  = a[peak - 3] + a[peak - 2] + a[peak - 1] + a[peak] + a[peak + 1] + a[peak + 2] + a[peak + 3];
+
+  //for sharp gaussian peak type pulses
+  //integral  = a[peak - 3] + a[peak - 2] + a[peak - 1] + a[peak] + a[peak + 1] + a[peak + 2] + a[peak + 3];
+
+  //for scintillation type pulses
+  for (int i= std::max(peak - 100,2); i < std::min (peak + 800, 1023); ++i) integral += a[i];
 
   return integral;
 }
