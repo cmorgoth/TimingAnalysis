@@ -598,6 +598,7 @@ float LinearFit_Baseline(TH1F * pulse, const int index_min, const int range)
   TF1 *fBaseline = new TF1("fBaseline","pol0",0, index_min-range);
   pulse->Fit("fBaseline","Q","", 0, index_min-range);
   float base = fBaseline->GetParameter(0);
+  delete fBaseline;
   
   return base;
 }
@@ -608,6 +609,7 @@ float LinearFit_Intercept(TH1F* pulse, const float base, const int index_first, 
   TF1* fRise = new TF1("fRise","pol1", index_first, index_last);
   pulse->Fit("fRise","Q","", index_first, index_last);
   float timeIntercept = (base - fRise->GetParameter(0))/fRise->GetParameter(1);
+  delete fRise;
 
   return timeIntercept;
 }
@@ -618,6 +620,7 @@ float GausFit_MeanTime(TH1F* pulse, const int index_first, const int index_last)
   TF1* fpeak = new TF1("fpeak","gaus", index_first, index_last);
   pulse->Fit("fpeak","Q","", index_first, index_last);
   float timepeak = fpeak->GetParameter(1);
+  delete fpeak;
   
   return timepeak;
 }
@@ -636,8 +639,8 @@ float ChannelIntegral(float *a, int peak)
 }
 
 float FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH){
-  int bM = pulse->FindFirstBinAbove(0.9*pulse->GetMaximum());
-  int bL = pulse->FindFirstBinAbove(0.125*pulse->GetMaximum());
+  int bM = pulse->FindFirstBinAbove(0.6*pulse->GetMaximum());
+  int bL = pulse->FindFirstBinAbove(0.1*pulse->GetMaximum());
   TF1* f = new TF1("f", "[0]+x*[1]", pulse->GetBinCenter(bL+nbinsL), pulse->GetBinCenter(bM+nbinsH));
   //pulse->Fit(f,"MWLR");
   pulse->Fit(f,"RQ");
@@ -645,7 +648,7 @@ float FitRisingEdge(TH1F* pulse, int nbinsL, int nbinsH){
   float b = f->GetParameter(0);
   delete f;
   //std::cout << "HTM: " << 0.2*(0.2*pulse->GetMaximum()-b)/m << std::endl;
-  return  0.2*(0.3*pulse->GetMaximum()-b)/m;//converted to picoseconds
+  return  0.2*(0.2*pulse->GetMaximum()-b)/m;//converted to picoseconds
   
 }
 
@@ -685,4 +688,5 @@ void FitFullPulse(TH1F* pulse, float &par0, float &par1, float &par2){
   par0 = f->GetParameter(0);
   par1 = f->GetMaximum(10,1000);
   par2 = f->GetX(10,0.3*par1);
+  delete f;
 }
